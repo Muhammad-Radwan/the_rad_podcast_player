@@ -13,13 +13,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int currentPage = 1;
+  TextEditingController searchController = TextEditingController();
+  @override
+  void initState() {
+    initData();
+    super.initState();
+  }
+
+  Future<void> initData() async {
+    final provider = Provider.of<PodcastsRepo>(context, listen: false);
+    await provider.getPopularContent(currentPage, 20);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<PodcastsRepo>(
       builder: (context, repo, child) => Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async => await repo.getPopularContent(),
-        ),
         body: Padding(
           padding: EdgeInsets.all(20),
           child: Center(
@@ -35,6 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   style: TextStyle(color: Colors.white),
+                  //controller: searchController,
+                  onSubmitted: (value) async {
+                     await repo.searchPodcast(value);
+                  },
                 ),
                 SizedBox(height: 10),
                 repo.isLoading
@@ -74,6 +88,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                         ),
                       ),
+                ElevatedButton(
+                  onPressed: () async {
+                    setState(() {
+                      currentPage += 1;
+                    });
+                    await repo.getPopularContent(currentPage, 20);
+                  },
+                  child: Text('Load More'),
+                ),
               ],
             ),
           ),

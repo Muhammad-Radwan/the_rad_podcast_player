@@ -24,13 +24,14 @@ class _PoscastPlayerScreenState extends State<PoscastPlayerScreen> {
   bool isPlaying = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
-
+  bool isLoading = false;
   @override
   void initState() {
     _player = AudioPlayer();
 
     // Listen to audio duration changes
     _player.onDurationChanged.listen((duration) {
+      if (!mounted) return;
       setState(() {
         _duration = duration;
       });
@@ -38,6 +39,7 @@ class _PoscastPlayerScreenState extends State<PoscastPlayerScreen> {
 
     // Listen to audio position changes
     _player.onPositionChanged.listen((position) {
+      if (!mounted) return;
       setState(() {
         _position = position;
       });
@@ -81,10 +83,15 @@ class _PoscastPlayerScreenState extends State<PoscastPlayerScreen> {
                           child: ClipRRect(
                             borderRadius: BorderRadiusGeometry.circular(10),
                             child: SizedBox(
-                              child: Image.network(
-                                widget.episode.imageUrl!,
-                                height: 400,
-                              ),
+                              child: widget.episode.imageUrl == null
+                                  ? Image.asset(
+                                      'images/podcast.png',
+                                      height: 400,
+                                    )
+                                  : Image.network(
+                                      widget.episode.imageUrl!,
+                                      height: 400,
+                                    ),
                             ),
                           ),
                         ),
@@ -111,6 +118,10 @@ class _PoscastPlayerScreenState extends State<PoscastPlayerScreen> {
                           IconButton(
                             onPressed: () async {
                               if (isPlaying != true) {
+                                setState(() {
+                                  isLoading = true;
+                                });
+
                                 await _player.play(
                                   UrlSource(repo.episode.audioUrl!),
                                 );
@@ -124,13 +135,14 @@ class _PoscastPlayerScreenState extends State<PoscastPlayerScreen> {
                                 } else {
                                   isPlaying = true;
                                 }
+                                isLoading = false;
                               });
                             },
                             icon: Icon(
                               isPlaying ? Icons.pause : Icons.play_arrow,
                             ),
                           ),
-
+                          isLoading ? CircularProgressIndicator() : SizedBox(),
                           IconButton(
                             onPressed: () async {
                               await _player.stop();

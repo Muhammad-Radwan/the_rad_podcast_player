@@ -96,29 +96,34 @@ class _PodcastDetailsScreenState extends State<PodcastDetailsScreen> {
                                     children: [
                                       Hero(
                                         tag: currentEpisode.uuid!,
-                                        child: Image.network(
-                                          currentEpisode.imageUrl!,
-                                          height: 100,
-                                          loadingBuilder: (context, child, loadingProgress) {
-                                            if (loadingProgress == null) {
-                                              return child;
-                                            }
-                                            return Center(
-                                              child: CircularProgressIndicator(
-                                                value:
-                                                    loadingProgress
-                                                            .expectedTotalBytes !=
-                                                        null
-                                                    ? loadingProgress
-                                                              .cumulativeBytesLoaded /
-                                                          (loadingProgress
-                                                                  .expectedTotalBytes ??
-                                                              1)
-                                                    : null,
+                                        child: currentEpisode.imageUrl == null
+                                            ? Image.asset(
+                                                'images/podcast.png',
+                                                height: 100,
+                                              )
+                                            : Image.network(
+                                                currentEpisode.imageUrl!,
+                                                height: 100,
+                                                loadingBuilder: (context, child, loadingProgress) {
+                                                  if (loadingProgress == null) {
+                                                    return child;
+                                                  }
+                                                  return Center(
+                                                    child: CircularProgressIndicator(
+                                                      value:
+                                                          loadingProgress
+                                                                  .expectedTotalBytes !=
+                                                              null
+                                                          ? loadingProgress
+                                                                    .cumulativeBytesLoaded /
+                                                                (loadingProgress
+                                                                        .expectedTotalBytes ??
+                                                                    1)
+                                                          : null,
+                                                    ),
+                                                  );
+                                                },
                                               ),
-                                            );
-                                          },
-                                        ),
                                       ),
                                       SizedBox(width: 10),
                                       Text('${currentEpisode.name}'),

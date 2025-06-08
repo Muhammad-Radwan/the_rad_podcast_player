@@ -15,14 +15,18 @@ class PodcastsRepo extends ChangeNotifier {
   bool get isLoading => _isloading;
 
   final ValueNotifier<GraphQLClient> tadyClient;
+
   PodcastsRepo(this.tadyClient);
 
-  Future<void> getPopularContent() async {
+  Future<void> getPopularContent(int page, int limit) async {
     _isloading = true;
 
-    String query = '''
+    //_podcasts = [];
+
+    String query =
+        '''
     query {
-  getPopularContent(filterByLanguage: ENGLISH)
+  getPopularContent(filterByLanguage: ENGLISH, page: $page, limitPerPage: $limit)
   {
     popularityRankId
     podcastSeries {
@@ -60,12 +64,75 @@ class PodcastsRepo extends ChangeNotifier {
       _isloading = false;
     } else {
       final res = result.data!['getPopularContent']['podcastSeries'];
+
       final List<Podcast> podcasts = (res as List<dynamic>)
           .map((item) => Podcast.fromJson(item))
           .toList();
-      _podcasts = podcasts;
+
+      if (podcasts.isNotEmpty) {
+        _podcasts.addAll(podcasts);
+        _isloading = false;
+        notifyListeners();
+        podcasts.clear();
+      }
+    }
+  }
+
+  Future<void> searchPodcast(String term) async {
+    _isloading = true;
+
+    _podcasts = [];
+
+    String query =
+        '''
+        {
+      search(term: "$term", limitPerPage: 10) {
+        searchId
+        podcastSeries {
+          uuid
+          name
+          datePublished
+          description
+          imageUrl
+            totalEpisodesCount
+          genres
+          seriesType
+          authorName
+          episodes {
+            uuid
+            name
+            datePublished
+            audioUrl
+            imageUrl
+          }
+        }
+      }
+    }
+      ''';
+
+    final QueryOptions options = QueryOptions(
+      document: gql(query),
+      //variables: {'name': 'Your Podcast Name'},
+    );
+
+    final result = await tadyClient.value.query(options);
+
+    if (result.hasException) {
+      log(result.exception.toString());
       _isloading = false;
-      notifyListeners();
+    } else {
+      final res = result.data!['search']['podcastSeries'];
+
+      final List<Podcast> podcasts = (res as List<dynamic>)
+          .map((item) => Podcast.fromJson(item))
+          .toList();
+
+      if (podcasts.isNotEmpty) {
+        _podcasts.addAll(podcasts);
+        _isloading = false;
+        notifyListeners();
+        podcasts.clear();
+      }
     }
   }
 
